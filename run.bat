@@ -1,2 +1,2 @@
 @echo off
-.\build\main.exe
+.\build\main2.exe
