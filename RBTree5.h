@@ -1,3 +1,10 @@
+#include <vector>
+#include <string>
+#include <thread>
+#include <future>
+#include <algorithm>
+#include <iostream>
+
 #include <cassert>
 #include <memory>
 #include <iostream>
@@ -143,4 +150,66 @@ RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
         t = t.insert(*i);
     }
     return t;
+}
+
+
+// Function to merge two trees
+template<typename T>
+RBTree<T> mergeTrees(const RBTree<T>& t1, const RBTree<T>& t2) {
+    RBTree<T> result = t1;
+    forEach(t2, [&](T val) {
+        result = result.insert(val);
+    });
+    return result;
+}
+
+// Helper function to build a tree from a sorted range
+template<typename T, typename Iter>
+RBTree<T> buildTreeFromSortedRange(Iter begin, Iter end) {
+    RBTree<T> tree;
+    for (Iter it = begin; it != end; ++it) {
+        tree = tree.insert(*it);
+    }
+    return tree;
+}
+
+// Multithreaded insertion function
+template<typename T, class Begin, class End>
+RBTree<T> insertedParallel(Begin begin, End end, size_t numThreads = std::thread::hardware_concurrency()) {
+    size_t totalElements = std::distance(begin, end);
+    if (totalElements == 0) {
+        return RBTree<T>();
+    }
+
+    // Determine chunk size
+    size_t chunkSize = (totalElements + numThreads - 1) / numThreads; // Round up
+    std::vector<std::future<RBTree<T>>> futures;
+
+    // Launch threads to build partial trees
+    for (size_t i = 0; i < numThreads; ++i) {
+        auto chunkBegin = begin + i * chunkSize;
+        auto chunkEnd = (i == numThreads - 1) ? end : begin + (i + 1) * chunkSize;
+
+        // Sort the chunk and build the tree
+        futures.push_back(std::async(std::launch::async, [chunkBegin, chunkEnd]() {
+            std::vector<T> sortedChunk(chunkBegin, chunkEnd);
+            std::sort(sortedChunk.begin(), sortedChunk.end());
+            return buildTreeFromSortedRange<T>(sortedChunk.begin(), sortedChunk.end());
+        }));
+    }
+
+    // Collect partial trees
+    std::vector<RBTree<T>> partialTrees;
+    partialTrees.reserve(numThreads);
+    for (auto& fut : futures) {
+        partialTrees.push_back(fut.get());
+    }
+
+    // Sequentially merge all partial trees
+    RBTree<T> result;
+    for (const auto& tree : partialTrees) {
+        result = mergeTrees(result, tree);
+    }
+
+    return result;
 }

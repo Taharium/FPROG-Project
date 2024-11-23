@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ranges>
 #include <ranges>
-#include "RBTree.h"
+#include "RBTree4.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -184,7 +184,7 @@ int main() {
     //std::cout << '\n' << filtered.size() << '\n';
     //auto tree = inserted(RBTree<std::string>(), filtered.begin(), filtered.end());
     //printMemoryUsage();
-    std::vector<std::string> init = {
+    /* std::vector<std::string> init = {
         "A", "red", "black", "tree", "walks", "into", "A", "bar",
         "has", "j", "walker", "o", "the", "rocks",
         "and", "quickly", "rebalances", "itself.",
@@ -192,18 +192,18 @@ int main() {
         "HAS", "JOHNNY", "R", "ON", "THE", "ROCKS",
         "AND", "QUICKLY", "R", "ITSELF."
     };
-    auto filtered = init | std::ranges::views::filter(filterOneChar);
+    auto filtered = init | std::ranges::views::filter(filterOneChar); */
 
-    std::cout << nonfilteredwords.size() << '\n';
+    //std::cout << nonfilteredwords.size() << '\n';
     //auto tree = insertedParallel(RBTree<std::string>(), filteredWords.begin(), filteredWords.end(), 1000);
-    //auto tree = inserted(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
+    auto tree = inserted(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
     //printMemoryUsage();
     //std::sort(filteredWords.begin(), filteredWords.end());
     //std::vector<std::string> words(filtered.begin(), filtered.end());
     //RBTree<std::string> tree (vector_to_initializer_list(words));
-    
+    //auto tree = insertedParallel(filteredWords.begin(), filteredWords.end(), 1000)
     //std::cout << tree.countB() << '\n';
-    //outPut(tree);
+    outPut(tree);
     //std::unordered_set<std::string> filteredwords2(filteredText.begin(), filteredText.end());
     
     //std::ofstream file("output.txt");
