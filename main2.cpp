@@ -8,51 +8,6 @@
 #include <optional>
 #include <chrono>
 #include <algorithm>
-/* #include <windows.h>
-
-void printMemoryUsage() {
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-    
-    if (GlobalMemoryStatusEx(&statex)) {
-        std::cout << "Memory load: " << statex.dwMemoryLoad << "%\n";
-        std::cout << "Total physical memory: " << statex.ullTotalPhys / 1024 / 1024 << " MB\n";
-        std::cout << "Available physical memory: " << statex.ullAvailPhys / 1024 / 1024 << " MB\n";
-    } else {
-        std::cerr << "Error getting memory status\n";
-    }
-} */
-/* std::string result;
-    result.reserve(text.size());
-    // Iterate over the string using indices to capture the characters in a functional style
-    ranges::for_each(ranges::views::iota(0, (int)text.size()), [&](int index) {
-        // Only process valid characters
-        if (isAlpha(text[index])) {
-            result += text[index];
-        }
-        else if(text[index] == '\'' && isAlpha(text[index - 1]) && isAlpha(text[index + 1])) {
-            result += text[index];
-        }
-        else if(text[index] == '-' && isAlpha(text[index - 1]) && isAlpha(text[index + 1])) {
-            result += text[index];
-        } else {
-            result += ' ';
-        }
-    });
-    return {result}; */
-
-/* void printMemoryUsage() {
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-    
-    if (GlobalMemoryStatusEx(&statex)) {
-        std::cout << "Memory load: " << statex.dwMemoryLoad << "%\n";
-        std::cout << "Total physical memory: " << statex.ullTotalPhys / 1024 / 1024 << " MB\n";
-        std::cout << "Available physical memory: " << statex.ullAvailPhys / 1024 / 1024 << " MB\n";
-    } else {
-        std::cerr << "Error getting memory status\n";
-    }
-} */
 
 template<typename T>
 struct Maybe {
@@ -112,13 +67,21 @@ auto filterText = [](const auto& text) -> Maybe<std::string> {
     return {std::string(transformed.begin(), transformed.end())};
 };
 
-template<class T>
-void outPut(RBTree<T> const & t) {
+auto treeToVector = [](const auto& tree){
+    std::vector<std::string> result;
+    result.reserve(20000);
+    forEach(tree, [&](auto v) {
+        result.emplace_back(v);
+    });
+    return result;
+};
+
+void outPut(const auto& result) {
     std::ofstream file("output.txt");
     
     if(file.is_open()){
-        forEach(t, [&file](T v) {
-            file << v << '\n';
+        std::for_each(result.begin(), result.end(), [&](const auto& str){
+            file << str << '\n';
         });
     }
 }
@@ -151,16 +114,12 @@ auto str_toupper = [](const auto& s) -> Maybe<std::string> {
 auto filterOneChar = [](const auto& word){
     return !((word.size() == 1 && (word != "A" && word != "I")) || word == "EPILOGUE") ;
 };
-template<typename T>
-void test(std::initializer_list<T>){
-    return;
-}
 
-template <typename T>
-std::initializer_list<T> vector_to_initializer_list(const std::vector<T>& vec) {
-    // Create a temporary array and return it as an initializer list
-    return {vec.begin(), vec.end()};
-}
+auto filterVector = [](const auto& input) {
+    std::vector<std::string> result;
+    std::copy_if(input.begin(), input.end(), std::back_inserter(result), filterOneChar);
+    return result;
+};
 
 int main() {
     using namespace std::ranges;
@@ -171,6 +130,7 @@ int main() {
     
     std::vector<std::string> nonfilteredwords;
     nonfilteredwords.reserve(600000);
+    std::cout << nonfilteredwords.max_size();
 
     std::istringstream stream(text);
     std::string word;
@@ -180,34 +140,12 @@ int main() {
     }
 
     auto filteredWords = nonfilteredwords | views::filter(filterOneChar);
-    //std::vector<std::string> filtered(filteredWords.begin(), filteredWords.end());
-    //std::cout << '\n' << filtered.size() << '\n';
-    //auto tree = inserted(RBTree<std::string>(), filtered.begin(), filtered.end());
-    //printMemoryUsage();
-    /* std::vector<std::string> init = {
-        "A", "red", "black", "tree", "walks", "into", "A", "bar",
-        "has", "j", "walker", "o", "the", "rocks",
-        "and", "quickly", "rebalances", "itself.",
-        "A", "RED", "BLACK", "TREE", "WALKS", "INTO", "A", "BAR",
-        "HAS", "JOHNNY", "R", "ON", "THE", "ROCKS",
-        "AND", "QUICKLY", "R", "ITSELF."
-    };
-    auto filtered = init | std::ranges::views::filter(filterOneChar); */
-
-    //std::cout << nonfilteredwords.size() << '\n';
-    //auto tree = insertedParallel(RBTree<std::string>(), filteredWords.begin(), filteredWords.end(), 1000);
-    auto tree = inserted(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
-    //printMemoryUsage();
-    //std::sort(filteredWords.begin(), filteredWords.end());
-    //std::vector<std::string> words(filtered.begin(), filtered.end());
-    //RBTree<std::string> tree (vector_to_initializer_list(words));
-    //auto tree = insertedParallel(filteredWords.begin(), filteredWords.end(), 1000)
-    //std::cout << tree.countB() << '\n';
-    outPut(tree);
-    //std::unordered_set<std::string> filteredwords2(filteredText.begin(), filteredText.end());
     
-    //std::ofstream file("output.txt");
 
+    auto tree = inserted(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
+    //auto tree = insertedParallel<std::string>(filteredWords.begin(), filteredWords.end(), 1000);
+    
+    outPut(treeToVector(tree));
     
     auto end = std::chrono::high_resolution_clock::now();
     
