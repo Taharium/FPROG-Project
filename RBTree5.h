@@ -1,23 +1,18 @@
-#include <vector>
-#include <string>
-#include <thread>
-#include <future>
-#include <algorithm>
-#include <iostream>
-
 #include <cassert>
 #include <memory>
 #include <iostream>
 #include <numeric>
 #include <algorithm>
+#include <future>
+#include <ranges>
 
 #pragma once
 
+enum Color { R, B };
+
 template<typename T>
 class RBTree {
-
-    public:
-        enum Color { R, B };
+    private:
         struct Node {
             Node(Color c, 
                 std::shared_ptr<const Node> const & lft, 
@@ -25,29 +20,23 @@ class RBTree {
                 std::shared_ptr<const Node> const & rgt)
                 : _c(c), _lft(lft), _val(val), _rgt(rgt)
             {}
+            T _val;
             Color _c;
             std::shared_ptr<const Node> _lft;
-            T _val;
             std::shared_ptr<const Node> _rgt;
         };
+        explicit RBTree(std::shared_ptr<const Node> const & node) : _root(node) {} 
+        Color rootColor() const {
+            assert (!isEmpty());
+            return _root->_c;
+        }
+
+    public:
         RBTree() {}
-        RBTree(Color c, RBTree const & lft, T val, RBTree const & rgt)
+        RBTree(Color c, const RBTree& lft, T val, const RBTree& rgt)
             : _root(std::make_shared<const Node>(c, lft._root, val, rgt._root)) {
             assert(lft.isEmpty() || lft.root() < val);
             assert(rgt.isEmpty() || val < rgt.root());
-        }
-
-        RBTree(std::initializer_list<T> init) {
-            RBTree t;
-            for (T v : init) {
-                t = t.insert(v);
-            }
-            _root = t._root;
-        }
-
-        RBTree insert(T x) const {
-            RBTree t = ins(x);
-            return RBTree(B, t.left(), t.root(), t.right());
         }
 
         bool isEmpty() const { return !_root; }
@@ -63,11 +52,13 @@ class RBTree {
             assert(!isEmpty());
             return RBTree(_root->_rgt);
         }
+        RBTree insert(T& x) const {
+            RBTree t = ins(x);
+            return RBTree(B, t.left(), t.root(), t.right());
+        }
 
-        static RBTree balance(Color c
-                    , RBTree const & lft
-                    , T x
-                    , RBTree const & rgt) {
+    private:
+        static RBTree balance(Color c, const RBTree& lft, T& x, const RBTree& rgt) {
             if (c == B && lft.doubledLeft())
                 return RBTree(R
                             , lft.left().paint(B)
@@ -92,11 +83,7 @@ class RBTree {
                 return RBTree(c, lft, x, rgt);
         }
 
-    private:
-
-        explicit RBTree(std::shared_ptr<const Node> const & node) : _root(node) {} 
-
-        RBTree ins(T x) const {
+        RBTree ins(const T& x) const {
             if (isEmpty())
                 return RBTree(R, RBTree(), x, RBTree());
             T y = root();
@@ -126,17 +113,12 @@ class RBTree {
             return RBTree(c, left(), root(), right());
         }
 
-        Color rootColor() const {
-            assert (!isEmpty());
-            return _root->_c;
-        }
-
         std::shared_ptr<const Node> _root;
 
 };
 
 template<class T, class F>
-void forEach(RBTree<T> const & t, F f) {
+void forEach(const RBTree<T>& t, F f) {
     if (!t.isEmpty()) {
         forEach(t.left(), f);
         f(t.root());
@@ -152,64 +134,38 @@ RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
     return t;
 }
 
+template<class T>
+RBTree<T> merge(const RBTree<T>& left, const RBTree<T>& right) {
+    // Merging is non-trivial in RB trees, but can be approximated.
+    // For simplicity, insert all elements of `right` into `left`.
+    std::vector<T> elements;
+    elements.reserve(20000);
+    forEach(right, [&](const T& x) { elements.emplace_back(x); });
+    return inserted(left, elements.begin(), elements.end());
+}
 
-// Function to merge two trees
-template<typename T>
-RBTree<T> mergeTrees(const RBTree<T>& t1, const RBTree<T>& t2) {
-    RBTree<T> result = t1;
-    forEach(t2, [&](T val) {
-        result = result.insert(val);
+template<class T, class Iter>
+RBTree<T> parallelInsert(RBTree<T> t, Iter begin, Iter end, size_t depth = 0) {
+    constexpr size_t PARALLEL_THRESHOLD = 15000;
+    constexpr size_t MAX_DEPTH = 3; // Limit parallel depth to avoid overhead.
+
+    // Compute distance without assuming random access
+    auto dist = std::ranges::distance(begin, end);
+
+    if (dist <= PARALLEL_THRESHOLD || depth >= MAX_DEPTH) {
+        // Base case: Insert sequentially
+        return inserted(t, begin, end);
+    }
+
+    // Split the range into two halves
+    auto mid = begin + dist / 2;
+
+    // Process each half in parallel
+    auto leftFuture = std::async(std::launch::async, [&]() {
+        return parallelInsert(t, begin, mid, depth + 1);
     });
-    return result;
-}
+    auto rightTree = parallelInsert(t, mid, end, depth + 1);
 
-// Helper function to build a tree from a sorted range
-template<typename T, typename Iter>
-RBTree<T> buildTreeFromSortedRange(Iter begin, Iter end) {
-    RBTree<T> tree;
-    for (Iter it = begin; it != end; ++it) {
-        tree = tree.insert(*it);
-    }
-    return tree;
-}
-
-// Multithreaded insertion function
-template<typename T, class Begin, class End>
-RBTree<T> insertedParallel(Begin begin, End end, size_t numThreads = std::thread::hardware_concurrency()) {
-    size_t totalElements = std::distance(begin, end);
-    if (totalElements == 0) {
-        return RBTree<T>();
-    }
-
-    // Determine chunk size
-    size_t chunkSize = (totalElements + numThreads - 1) / numThreads; // Round up
-    std::vector<std::future<RBTree<T>>> futures;
-
-    // Launch threads to build partial trees
-    for (size_t i = 0; i < numThreads; ++i) {
-        auto chunkBegin = begin + i * chunkSize;
-        auto chunkEnd = (i == numThreads - 1) ? end : begin + (i + 1) * chunkSize;
-
-        // Sort the chunk and build the tree
-        futures.push_back(std::async(std::launch::async, [chunkBegin, chunkEnd]() {
-            std::vector<T> sortedChunk(chunkBegin, chunkEnd);
-            std::sort(sortedChunk.begin(), sortedChunk.end());
-            return buildTreeFromSortedRange<T>(sortedChunk.begin(), sortedChunk.end());
-        }));
-    }
-
-    // Collect partial trees
-    std::vector<RBTree<T>> partialTrees;
-    partialTrees.reserve(numThreads);
-    for (auto& fut : futures) {
-        partialTrees.push_back(fut.get());
-    }
-
-    // Sequentially merge all partial trees
-    RBTree<T> result;
-    for (const auto& tree : partialTrees) {
-        result = mergeTrees(result, tree);
-    }
-
-    return result;
+    // Merge the results
+    return merge(leftFuture.get(), rightTree);
 }
