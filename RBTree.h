@@ -6,6 +6,7 @@
 // 1. No red node has a red child.
 // 2. Every path from root to empty node contains the same
 // number of black nodes.
+#pragma once
 
 template<class T>
 class RBTree {
@@ -36,21 +37,6 @@ class RBTree {
             assert(lft.isEmpty() || lft.root() < val);
             assert(rgt.isEmpty() || val < rgt.root());
         }
-        RBTree(std::initializer_list<T> init) {
-            RBTree t;
-            for (T v : init) {
-                t = t.inserted(v);
-            }
-            _root = t._root;
-        } 
-        template<class I>
-        RBTree(I b, I e) {
-            RBTree t;
-            for_each(b, e, [&t](T const & v){
-                t = t.inserted(v);
-            });
-            _root = t._root;
-        }
         
         bool isEmpty() const { return !_root; }
         T root() const {
@@ -71,30 +57,9 @@ class RBTree {
             return RBTree(B, t.left(), t.root(), t.right());
         }
         // 1. No red node has a red child.
-        void assert1() const {
-            if (!isEmpty()) {
-                auto lft = left();
-                auto rgt = right();
-                if (rootColor() == R) 
-                {
-                    assert(lft.isEmpty() || lft.rootColor() == B);
-                    assert(rgt.isEmpty() || rgt.rootColor() == B);
-                }
-                lft.assert1();
-                rgt.assert1();
-            }
-        }
-        int countB() const {
-            if (isEmpty())
-                return 0;
-            int lft = left().countB();
-            int rgt = right().countB();
-            assert(lft == rgt);
-            return (rootColor() == B)? 1 + lft: lft;
-        }
+
     private:
         RBTree ins(T x) const {
-            assert1();
             if (isEmpty())
                 return RBTree(R, RBTree(), x, RBTree());
             T y = root();
@@ -182,17 +147,14 @@ RBTree<T> inserted(RBTree<T> t, Beg begin, End end) {
 #include <future>
 #include <iterator>
 
-static int count = 0;
 template<class T, class Beg, class End>
 RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
-    std::cout << ++count << '\n';
-    if (it == end)
-        return t;
-    T item = *it;
-    auto t1 = inserted(t, ++it, end);
-    return t1.inserted(item);
-
+    for(auto i = it; i != end; ++i ){
+        t = t.inserted(*i);
+    }
+    return t;
 }
+
 
 
 // Merges two immutable RBTrees
