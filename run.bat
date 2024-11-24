@@ -1,2 +1,2 @@
 @echo off
-.\build\main2.exe
+wsl ./buildG++/test

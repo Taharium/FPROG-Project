@@ -1,13 +1,10 @@
-#include <iostream>
 #include <ranges>
-#include <ranges>
-#include "RBTree4.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <optional>
-#include <chrono>
 #include <algorithm>
+#include <string>
 
 template<typename T>
 struct Maybe {
@@ -119,37 +116,3 @@ auto filterVector = [](const auto& input) {
     std::copy_if(input.begin(), input.end(), std::back_inserter(result), filterOneChar);
     return result;
 };
-
-int main() {
-    using namespace std::ranges;
-    auto start = std::chrono::high_resolution_clock::now();
-    std::string text = readFileIntoString("war_and_peace.txt")
-                        .apply(trimText("CHAPTER 1")("*** END OF THE PROJECT GUTENBERG EBOOK, WAR AND PEACE ***"))
-                        .apply(filterText).valueType.value_or("");
-    
-    std::vector<std::string> nonfilteredwords;
-    nonfilteredwords.reserve(600000);
-    std::istringstream stream(text);
-    std::string word;
-    while(stream) {
-        stream >> word;
-        nonfilteredwords.emplace_back(str_toupper(word).valueType.value_or(""));      
-    }
-
-    auto filteredWords = nonfilteredwords | views::filter(filterOneChar);
-    
-
-    auto tree = inserted(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
-    //auto tree = insertedParallel<std::string>(filteredWords.begin(), filteredWords.end(), 1000);
-    
-    outPut(treeToVector(tree));
-    
-    auto end = std::chrono::high_resolution_clock::now();
-    
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Execution time: " << duration.count() << " ms" << std::endl;
-
-    return 0;
-}
-
-
