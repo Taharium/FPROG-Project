@@ -6,7 +6,6 @@
 #include <vector>
 #include <optional>
 #include <chrono>
-#include <unordered_set>
 #include <string_view>
 #include <algorithm>
 
@@ -24,8 +23,8 @@ struct Maybe {
 };
 
 auto trimText = [](const std::string& startMarker) {
-    return [&startMarker](const std::string& endMarker) {
-        return [&startMarker, &endMarker](const std::string& text) -> Maybe<std::string> {
+    return [startMarker](const std::string& endMarker) {
+        return [startMarker, endMarker](const std::string& text) -> Maybe<std::string> {
             const auto start_pos = text.find(startMarker);
             const auto end_pos = text.find(endMarker);
 
@@ -69,7 +68,7 @@ auto filterText = [](const auto& text) -> Maybe<std::string> {
 auto treeToVector = [](const auto& tree){
     std::vector<std::string> result;
 
-    forEach(tree, [&](auto&& v) {
+    forEach(tree, [&](auto v) {
         result.emplace_back(v);
     });
     return result;
@@ -114,15 +113,15 @@ auto filterInvalid = [](const auto& word){
     return !((word.size() == 1 && (word != "A" && word != "I")) || word == "EPILOGUE") ;
 };
 
-auto insertIntoSet = [](const auto& text){
+auto insertIntoVector = [](const auto& text){
     size_t wordCount = std::count(text.begin(), text.end(), ' ') + 1;
-    std::unordered_set<std::string> nonfilteredwords;
+    std::vector<std::string> nonfilteredwords;
     nonfilteredwords.reserve(wordCount);
 
     std::istringstream stream(text);
     std::string word;
     while(stream >> word) {
-        nonfilteredwords.insert(str_toupper(word));      
+        nonfilteredwords.emplace_back(str_toupper(word));      
     }
     return nonfilteredwords;
 };
@@ -138,28 +137,3 @@ auto insertIntoStream = [](const auto& words){
 auto printTime = [](const auto& duration){
     std::cout << "Execution time: " << duration.count() << " ms" << std::endl;
 };
-
-int main() {
-    using namespace std::ranges;
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::string text = readFileIntoString("war_and_peace.txt")
-                        .apply(trimText("CHAPTER 1")("*** END OF THE PROJECT GUTENBERG EBOOK, WAR AND PEACE ***"))
-                        .apply(filterText).valueType.value_or("");
-    
-    auto nonfilteredwords = insertIntoSet(text);
-
-    auto filteredWords = nonfilteredwords | views::filter(filterInvalid);
-
-    auto tree = inserted(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
-    
-    outPut(insertIntoStream(treeToVector(tree)))("output.txt");
-    
-    auto end = std::chrono::high_resolution_clock::now();
-    
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    printTime(duration);
-
-    return 0;
-}
-

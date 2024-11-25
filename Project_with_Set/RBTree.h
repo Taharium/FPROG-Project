@@ -35,32 +35,27 @@ inline bool isEmpty(const RBTree<T>& locRoot) {
 
 template<typename T>
 Color rootColor(const RBTree<T>& locRoot) {
-    assert (!isEmpty(locRoot));
     return locRoot->_c;
 }
 
 template<typename T>
 inline T root(const RBTree<T>& locRoot) {
-    assert(!isEmpty(locRoot));
     return locRoot->_val;
 }
 
 template<typename T>
 inline RBTree<T> left(const RBTree<T>& locRoot) {
-    assert(!isEmpty(locRoot));
     return locRoot->_lft;
 }
 
 template<typename T>
 inline RBTree<T> right(const RBTree<T>& locRoot) {
-    assert(!isEmpty(locRoot));
     return locRoot->_rgt;
 }
 
 template<typename T>
 auto paint(Color c) {
     return [c](const RBTree<T>& locRoot) {
-        assert(!isEmpty(locRoot));
         return std::make_shared<const Node<T>>(c, left(locRoot), root(locRoot), right(locRoot));
     };
 }

@@ -23,8 +23,8 @@ struct Maybe {
 };
 
 auto trimText = [](const std::string& startMarker) {
-    return [startMarker](const std::string& endMarker) {
-        return [startMarker, endMarker](const auto& text) -> Maybe<std::string_view> {
+    return [&startMarker](const std::string& endMarker) {
+        return [&startMarker, &endMarker](const std::string& text) -> Maybe<std::string> {
             const auto start_pos = text.find(startMarker);
             const auto end_pos = text.find(endMarker);
 
@@ -32,7 +32,7 @@ auto trimText = [](const std::string& startMarker) {
                 return {std::nullopt};
             }
 
-            return {std::string_view{text}.substr(start_pos + startMarker.length(), end_pos - start_pos - startMarker.length())};
+            return {std::string{text}.substr(start_pos + startMarker.length(), end_pos - start_pos - startMarker.length())};
         };
     };
 };
@@ -67,7 +67,6 @@ auto filterText = [](const auto& text) -> Maybe<std::string> {
 
 auto treeToVector = [](const auto& tree){
     std::vector<std::string> result;
-    result.reserve(20000);
 
     forEach(tree, [&](auto v) {
         result.emplace_back(v);
@@ -115,8 +114,9 @@ auto filterInvalid = [](const auto& word){
 };
 
 auto insertIntoVector = [](const auto& text){
+    size_t wordCount = std::count(text.begin(), text.end(), ' ') + 1;
     std::vector<std::string> nonfilteredwords;
-    nonfilteredwords.reserve(600000);
+    nonfilteredwords.reserve(wordCount);
 
     std::istringstream stream(text);
     std::string word;
