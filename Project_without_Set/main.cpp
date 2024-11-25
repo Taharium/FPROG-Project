@@ -1,12 +1,11 @@
 #include <iostream>
 #include <ranges>
-#include "RBTree2.h"
+#include "RBTree.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <optional>
 #include <chrono>
-#include <unordered_set>
 #include <string_view>
 #include <algorithm>
 
@@ -115,7 +114,7 @@ auto filterInvalid = [](const auto& word){
     return !((word.size() == 1 && (word != "A" && word != "I")) || word == "EPILOGUE") ;
 };
 
-auto insertIntoSet = [](const auto& text){
+auto insertIntoVector = [](const auto& text){
     std::vector<std::string> nonfilteredwords;
     nonfilteredwords.reserve(600000);
 
@@ -147,12 +146,11 @@ int main() {
                         .apply(trimText("CHAPTER 1")("*** END OF THE PROJECT GUTENBERG EBOOK, WAR AND PEACE ***"))
                         .apply(filterText).valueType.value_or("");
     
-    auto nonfilteredwords = insertIntoSet(text);
+    auto nonfilteredwords = insertIntoVector(text);
 
     auto filteredWords = nonfilteredwords | views::filter(filterInvalid);
 
-    auto tree = inserted(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
-    //auto tree = parallelInsert(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
+    auto tree = parallelInsert(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
     
     outPut(insertIntoStream(treeToVector(tree)))("output.txt");
     
