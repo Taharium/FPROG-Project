@@ -3,5 +3,5 @@ REM call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\B
 
 mkdir build
 pushd build
-cl ../main2.cpp /EHsc /std:c++20 /O2 /Ob3 /Oi /GL
+cl ../main.cpp /EHsc /std:c++20 /O2 /Ob3 /Oi /GL
 popd
