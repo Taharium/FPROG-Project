@@ -342,3 +342,136 @@ TEST_CASE("Test insertIntoStream function") {
         CHECK_FALSE(std::getline(resultStream, line));
     }
 }
+
+/** 
+ * 
+ *  ---------------------------------------- TREE TESTS -----------------------------------------
+ * 
+ **/
+
+
+
+TEST_CASE("Test Node creation") {
+    SUBCASE("Test single node creation") {
+        RBTree<int> root = std::make_shared<Node<int>>(Color::B, nullptr, 10, nullptr);
+
+        CHECK(root->_val == 10);
+        CHECK(root->_c == Color::B);
+        CHECK(root->_lft == nullptr);
+        CHECK(root->_rgt == nullptr);
+    }
+
+    SUBCASE("Test isEmpty function with a non-empty tree") {
+        RBTree<int> root = std::make_shared<Node<int>>(Color::B, nullptr, 10, nullptr);
+        CHECK_FALSE(isEmpty(root));
+    }
+
+    SUBCASE("Test isEmpty function with an empty tree") {
+        RBTree<int> emptyTree = nullptr;
+        CHECK(isEmpty(emptyTree)); 
+    }
+}
+
+TEST_CASE("Test rootColor function") {
+    SUBCASE("Test rootColor with Black root") {
+        RBTree<int> root = std::make_shared<Node<int>>(Color::B, nullptr, 10, nullptr);
+
+        CHECK(rootColor(root) == Color::B);
+    }
+
+    SUBCASE("Test rootColor with Red root") {
+        RBTree<int> root = std::make_shared<Node<int>>(Color::R, nullptr, 10, nullptr);
+
+        CHECK(rootColor(root) == Color::R);
+    }
+
+    SUBCASE("Test rootColor with non-empty tree") {
+        RBTree<int> leftChild = std::make_shared<Node<int>>(Color::R, nullptr, 5, nullptr);
+        RBTree<int> rightChild = std::make_shared<Node<int>>(Color::R, nullptr, 15, nullptr);
+        
+        RBTree<int> root = std::make_shared<Node<int>>(Color::B, leftChild, 10, rightChild);
+
+        CHECK(rootColor(root) == Color::B);
+    }
+}
+
+TEST_CASE("Test root, left, and right functions") {
+    
+    RBTree<int> leftChild = std::make_shared<Node<int>>(Color::R, nullptr, 5, nullptr);
+    RBTree<int> rightChild = std::make_shared<Node<int>>(Color::R, nullptr, 15, nullptr);
+    RBTree<int> rootNode = std::make_shared<Node<int>>(Color::B, leftChild, 10, rightChild);
+
+    SUBCASE("Test root function") {
+        CHECK(root(rootNode) == 10); 
+    }
+
+    SUBCASE("Test left function") {
+        CHECK(left(rootNode) == leftChild);
+        CHECK(left(rootNode) != rightChild);
+    }
+
+    SUBCASE("Test right function") {
+        CHECK(right(rootNode) == rightChild);
+        CHECK(right(rootNode) != leftChild);
+    }
+}
+
+TEST_CASE("Test doubledLeft and doubledRight functions") {
+    
+    RBTree<int> leftChild = std::make_shared<Node<int>>(Color::R, nullptr, 5, nullptr);
+    RBTree<int> rightChild = std::make_shared<Node<int>>(Color::R, nullptr, 15, nullptr);
+    RBTree<int> blackNode = std::make_shared<Node<int>>(Color::B, nullptr, 20, nullptr);
+
+    RBTree<int> rootNode = std::make_shared<Node<int>>(Color::R, leftChild, 10, rightChild);
+
+    SUBCASE("Test doubledLeft function") {
+        CHECK(doubledLeft(rootNode) == true);
+
+        RBTree<int> blackLeftChild = std::make_shared<Node<int>>(Color::B, nullptr, 5, nullptr);
+        RBTree<int> rootWithBlackLeft = std::make_shared<Node<int>>(Color::R, blackLeftChild, 10, rightChild);
+        CHECK(doubledLeft(rootWithBlackLeft) == false);
+    }
+
+    SUBCASE("Test doubledRight function") {
+        CHECK(doubledRight(rootNode) == true);
+
+        RBTree<int> blackRightChild = std::make_shared<Node<int>>(Color::B, nullptr, 15, nullptr);
+        RBTree<int> rootWithBlackRight = std::make_shared<Node<int>>(Color::R, leftChild, 10, blackRightChild);
+        CHECK(doubledRight(rootWithBlackRight) == false);
+    }
+
+    SUBCASE("Test doubledLeft with empty tree") {
+        RBTree<int> emptyTree = nullptr;
+        CHECK(doubledLeft(emptyTree) == false);
+    }
+
+    SUBCASE("Test doubledRight with empty tree") {
+        RBTree<int> emptyTree = nullptr;
+        CHECK(doubledRight(emptyTree) == false);
+    }
+}
+
+TEST_CASE("Test paint and balance functions") {
+
+    RBTree<int> leftChild = std::make_shared<Node<int>>(Color::R, nullptr, 5, nullptr);
+    RBTree<int> rightChild = std::make_shared<Node<int>>(Color::R, nullptr, 15, nullptr);
+    RBTree<int> blackChild = std::make_shared<Node<int>>(Color::B, nullptr, 20, nullptr);
+
+    RBTree<int> rootNode = std::make_shared<Node<int>>(Color::R, leftChild, 10, rightChild);
+
+    SUBCASE("Test paint function") {
+        auto paintedNode = paintRed<int>(rootNode);
+        CHECK(paintedNode->_c == Color::R);
+        CHECK(paintedNode->_val == 10);
+    }
+
+    SUBCASE("Test balance function with doubledLeft") {
+        RBTree<int> balancedNode = balance<int>(Color::B)(rootNode)(20)(rightChild);
+        CHECK(balancedNode->_c == Color::R);
+    }
+
+    SUBCASE("Test balance function with doubledRight") {
+        RBTree<int> balancedNode = balance<int>(Color::B)(rootNode)(20)(rightChild);
+        CHECK(balancedNode->_c == Color::R);
+    }
+}

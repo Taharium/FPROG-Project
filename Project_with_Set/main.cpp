@@ -24,8 +24,8 @@ struct Maybe {
 };
 
 auto trimText = [](const std::string& startMarker) {
-    return [&startMarker](const std::string& endMarker) {
-        return [&startMarker, &endMarker](const std::string& text) -> Maybe<std::string> {
+    return [startMarker](const std::string& endMarker) {
+        return [startMarker, endMarker](const auto& text) -> Maybe<std::string> {
             const auto start_pos = text.find(startMarker);
             const auto end_pos = text.find(endMarker);
 
@@ -115,10 +115,8 @@ auto filterInvalid = [](const auto& word){
 };
 
 auto insertIntoSet = [](const auto& text){
-    size_t wordCount = std::count(text.begin(), text.end(), ' ') + 1;
     std::unordered_set<std::string> nonfilteredwords;
-    nonfilteredwords.reserve(wordCount);
-
+    
     std::istringstream stream(text);
     std::string word;
     while(stream >> word) {

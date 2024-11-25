@@ -161,6 +161,18 @@ RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
     return insert(t1)(item);
 } */
 
+/* template<class T>
+auto inserted(RBTree<T> t) {
+    return [&t](auto it, auto end) {
+        if (it == end) {
+            return t;
+        }
+        T item = *it;
+        auto t1 = inserted(t)(++it, end);
+        return insert(t1)(item);
+    };
+} */
+
 template<class T>
 auto inserted(RBTree<T> t) {
     return [&t](auto it, auto end) {
