@@ -155,7 +155,7 @@ void forEach(const RBTree<T>& t, F f) {
     }
 }
 
-template<class T, class Beg, class End>
+/* template<class T, class Beg, class End>
 RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
     if (it == end) {
         return t;
@@ -163,47 +163,52 @@ RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
     T item = *it;
     auto t1 = inserted(t, ++it, end);
     return insert(t1)(item);
-}
-
-/* template<class T, class Beg, class End>
-RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
-    for(auto i = it; i != end; ++i ){
-        t = insert(t)(*i);
-    }
-    return t;
 } */
 
 template<class T>
-RBTree<T> merge(const RBTree<T>& left, const RBTree<T>& right) {
-    std::vector<T> elements;
-    elements.reserve(20000);
-    forEach(right, [&](const T& x) { elements.emplace_back(x); });
-    return inserted(left, elements.begin(), elements.end());
+auto inserted(RBTree<T> t) {
+    return [&t](auto it, auto end) {
+        for(auto i = it; i != end; ++i) {
+            t = insert(t)(*i);
+        }
+        return t;
+    };
 }
 
-template<class T, class Iter>
-RBTree<T> parallelInsert(RBTree<T> t, Iter begin, Iter end) {
+template<class T>
+auto merge(RBTree<T> left) {
+    return [&left](const RBTree<T>& right) {
+        std::vector<T> elements;
+        elements.reserve(20000);
+        forEach(right, [&](const T& x) { elements.emplace_back(x); });
+        return inserted(left)(elements.begin(), elements.end());
+    };
+}
+
+template<class T>
+auto parallelInsert(RBTree<T> t) {
     constexpr size_t PARALLEL_THRESHOLD = 10000;
 
-    // Compute distance
-    auto dist = std::ranges::distance(begin, end);
+    return [&t](auto begin, auto end) {
+        // Compute distance
+        auto dist = std::ranges::distance(begin, end);
 
-    if (dist <= PARALLEL_THRESHOLD) {
-        //insert rest
-        return inserted(t, begin, end);
-    }
+        if (dist <= PARALLEL_THRESHOLD) {
+            // Insert rest
+            return inserted(t)(begin, end);
+        }
 
-    // Split the range into two halves
-    auto mid = begin;
-    std::advance(mid, dist / 2);
+        // Split the range into two halves
+        auto mid = begin;
+        std::advance(mid, dist / 2);
 
-    // Process each half in parallel
-    auto leftFuture = std::async(std::launch::async, [&]() {
-        return parallelInsert(t, begin, mid);
-    });
-    auto rightTree = parallelInsert(t, mid, end);
+        // Process each half in parallel
+        auto leftFuture = std::async(std::launch::async, [&]() {
+            return parallelInsert(t)(begin, mid);
+        });
+        auto rightTree = parallelInsert(t)(mid, end);
 
-    // Merge the results
-    return merge(leftFuture.get(), rightTree);
+        // Merge the results
+        return merge(leftFuture.get())(rightTree);
+    };
 }
-

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <ranges>
-#include "RBTree9.h"
+#include "RBTree2.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -116,13 +116,13 @@ auto filterInvalid = [](const auto& word){
 };
 
 auto insertIntoSet = [](const auto& text){
-    std::unordered_set<std::string> nonfilteredwords;
+    std::vector<std::string> nonfilteredwords;
     nonfilteredwords.reserve(600000);
 
     std::istringstream stream(text);
     std::string word;
     while(stream >> word) {
-        nonfilteredwords.insert(str_toupper(word));      
+        nonfilteredwords.emplace_back(str_toupper(word));      
     }
     return nonfilteredwords;
 };
@@ -152,7 +152,7 @@ int main() {
     auto filteredWords = nonfilteredwords | views::filter(filterInvalid);
 
     auto tree = inserted(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
-    //auto tree = parallelInsert(RBTree<std::string>(), filteredWords.begin(), filteredWords.end());
+    //auto tree = parallelInsert(RBTree<std::string>()) (filteredWords.begin(), filteredWords.end());
     
     outPut(insertIntoStream(treeToVector(tree)))("output.txt");
     
