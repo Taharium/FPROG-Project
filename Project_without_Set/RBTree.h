@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <future>
 #include <ranges>
+#include <vector>
 
 #pragma once
 
