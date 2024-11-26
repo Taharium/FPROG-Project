@@ -117,9 +117,7 @@ auto filterInvalid = [](const auto& word){
 };
 
 auto insertIntoSet = [](const std::string& text){
-    size_t wordCount = std::count(text.begin(), text.end(), ' ') + 1;
     std::unordered_set<std::string> nonfilteredwords;
-    nonfilteredwords.reserve(wordCount);
     
     std::istringstream stream(text);
     std::string word;

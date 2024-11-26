@@ -7,8 +7,6 @@
 #include <ranges>
 #include <vector>
 
-#pragma once
-
 enum Color { R, B };
 
 
@@ -87,7 +85,7 @@ template<typename T>
 auto balance(Color c) {
     return [c](const RBTree<T>& lft) {
         return [c, &lft](const T& x) {
-            return [c, &lft, &x](const RBTree<T>& rgt) {
+            return [c, &lft, x](const RBTree<T>& rgt) {
                 if (c == B && doubledLeft(lft))
                     return std::make_shared<const Node<T>>(R, 
                         paintBlack<T>(left(lft)), 
@@ -150,16 +148,6 @@ void forEach(const RBTree<T>& t, F f) {
         forEach(right(t), f);
     }
 }
-
-/* template<class T, class Beg, class End>
-RBTree<T> inserted(RBTree<T> t, Beg it, End end) {
-    if (it == end) {
-        return t;
-    }
-    T item = *it;
-    auto t1 = inserted(t, ++it, end);
-    return insert(t1)(item);
-} */
 
 /* template<class T>
 auto inserted(RBTree<T> t) {

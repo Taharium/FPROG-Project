@@ -85,8 +85,8 @@ inline bool doubledRight(const RBTree<T>& locRoot) {
 template<typename T>
 auto balance(Color c) {
     return [c](const RBTree<T>& lft) {
-        return [c, lft](const T& x) {
-            return [c, lft, x](const RBTree<T>& rgt) {
+        return [c, &lft](const T& x) {
+            return [c, &lft, x](const RBTree<T>& rgt) {
                 if (c == B && doubledLeft(lft))
                     return std::make_shared<const Node<T>>(R, 
                         paintBlack<T>(left(lft)), 
@@ -116,7 +116,7 @@ auto balance(Color c) {
 
 template<typename T>
 std::function<RBTree<T>(const T&)> ins(const RBTree<T>& locRoot) {
-    return [locRoot](const T& x) -> RBTree<T> {
+    return [&locRoot](const T& x) -> RBTree<T> {
         if (isEmpty(locRoot))
             return std::make_shared<const Node<T>>(R, RBTree<T>(), x, RBTree<T>());
         
@@ -135,7 +135,7 @@ std::function<RBTree<T>(const T&)> ins(const RBTree<T>& locRoot) {
 
 template<typename T>
 auto insert(const RBTree<T>& locRoot) {
-    return [locRoot](const T& x) -> RBTree<T> {
+    return [&locRoot](const T& x) -> RBTree<T> {
         RBTree<T> t = ins<T>(locRoot)(x);
         return std::make_shared<const Node<T>>(B, left(t), root(t), right(t));
     };
@@ -152,7 +152,7 @@ void forEach(const RBTree<T>& t, F f) {
 
 template<class T>
 auto inserted(RBTree<T> t) {
-    return [t](auto it, auto end) {
+    return [&t](auto it, auto end) {
         if (it == end) {
             return t;
         }

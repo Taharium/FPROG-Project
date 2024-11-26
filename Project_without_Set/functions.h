@@ -114,9 +114,7 @@ auto filterInvalid = [](const auto& word){
 };
 
 auto insertIntoVector = [](const auto& text){
-    size_t wordCount = std::count(text.begin(), text.end(), ' ') + 1;
     std::vector<std::string> nonfilteredwords;
-    nonfilteredwords.reserve(wordCount);
 
     std::istringstream stream(text);
     std::string word;

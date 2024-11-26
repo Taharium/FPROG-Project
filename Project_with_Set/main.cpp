@@ -62,7 +62,6 @@ auto filterText = [](const auto& text) -> Maybe<std::string> {
             }
         });
      
-        
     return {std::string(transformed.begin(), transformed.end())};
 };
 
@@ -114,8 +113,10 @@ auto filterInvalid = [](const auto& word){
     return !((word.size() == 1 && (word != "A" && word != "I")) || word == "EPILOGUE") ;
 };
 
+
 auto insertIntoSet = [](const auto& text){
     std::unordered_set<std::string> nonfilteredwords;
+
     
     std::istringstream stream(text);
     std::string word;

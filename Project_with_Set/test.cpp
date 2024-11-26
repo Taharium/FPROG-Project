@@ -470,3 +470,76 @@ TEST_CASE("Test paint and balance functions") {
         CHECK(balancedNode->_c == Color::R);
     }
 }
+
+TEST_CASE("Test Insertion") {
+    SUBCASE("Insertion into an empty tree") {
+        RBTree<int> emptyTree;
+        auto newTree = ins(emptyTree)(42);
+
+        REQUIRE(!isEmpty(newTree));
+        CHECK(root(newTree) == 42);
+        CHECK(rootColor(newTree) == R);
+        CHECK(isEmpty(left(newTree)));
+        CHECK(isEmpty(right(newTree)));
+    }
+
+    SUBCASE("Insertion into a single-node tree") {
+        RBTree<int> singleNodeTree = std::make_shared<const Node<int>>(B, RBTree<int>(), 10, RBTree<int>());
+        auto newTree = ins(singleNodeTree)(5);
+
+        REQUIRE(!isEmpty(newTree));
+        CHECK(root(newTree) == 10);
+        CHECK(rootColor(newTree) == B);
+        CHECK(!isEmpty(left(newTree)));
+        CHECK(isEmpty(right(newTree)));
+        CHECK(root(left(newTree)) == 5);
+        CHECK(rootColor(left(newTree)) == R);
+    }
+
+    SUBCASE("Prevent duplicate insertion") {
+        RBTree<int> singleNodeTree = std::make_shared<const Node<int>>(B, RBTree<int>(), 10, RBTree<int>());
+        auto newTree = ins(singleNodeTree)(10);
+
+        CHECK(newTree == singleNodeTree);
+    }
+}
+
+TEST_CASE("Test insert function") {
+    SUBCASE("root normalization") {
+        RBTree<int> tree;
+        tree = insert(tree)(20);
+        tree = insert(tree)(15);
+        tree = insert(tree)(25);
+        tree = insert(tree)(10);
+        tree = insert(tree)(5);
+
+        REQUIRE(!isEmpty(tree));
+        CHECK(rootColor(tree) == B);
+        CHECK(root(tree) == 15);
+    }
+}
+
+TEST_CASE("Test inserted function") {
+    SUBCASE("Empty range produces the same tree") {
+        RBTree<int> emptyTree;
+        std::vector<int> elements;
+
+        auto resultTree = inserted(emptyTree)(elements.begin(), elements.end());
+
+        CHECK(resultTree == emptyTree);
+    }
+
+    SUBCASE("Insert a single element from a range") {
+        RBTree<int> emptyTree;
+        std::vector<int> elements = {42};
+
+        auto resultTree = inserted(emptyTree)(elements.begin(), elements.end());
+
+        REQUIRE(!isEmpty<int>(resultTree));
+        CHECK(root<int>(resultTree) == 42);
+        CHECK(rootColor<int>(resultTree) == B);
+        CHECK(isEmpty<int>(left<int>(resultTree)));
+        CHECK(isEmpty<int>(right<int>(resultTree)));
+    }
+
+}
