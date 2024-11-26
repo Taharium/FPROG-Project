@@ -1,8 +1,8 @@
 ### Why two Folders
 
-We were unsure, if using a std::unordered_set is allowed, so made one with and one without.
+We were unsure, if using a std::unordered_set is allowed, so we made one with and one without.
 The problem is that without using a set, inserting into the tree recursivly is impossible, 
-because were are inserting about 590 000 words and wsl or linux in general can only tolerate about 260 000
+because were are inserting about 590 000 words and wsl, or linux in general, can only tolerate about 260 000
 recursions, because stack size is limited to 8 MB. Therefore, we had to insert iterativly.
 However, we added futures to make it faster.
 
@@ -20,4 +20,6 @@ If none of it works, we provided the binaries, so you may run it.
 Enter the desired folder and run testRun.bat to build and run it.
 
 
+
+made by Felgitsch Paul and Moulahi Taha
 
