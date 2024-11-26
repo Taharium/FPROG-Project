@@ -164,10 +164,11 @@ auto inserted(RBTree<T> t) {
 template<class T>
 auto inserted(RBTree<T> t) {
     return [&t](auto it, auto end) {
+        RBTree<T> result = t;
         for(auto i = it; i != end; ++i) {
-            t = insert(t)(*i);
+            result = insert(result)(*i);
         }
-        return t;
+        return result;
     };
 }
 
@@ -184,7 +185,7 @@ template<class T>
 auto parallelInsert(RBTree<T> t) {
     constexpr size_t PARALLEL_THRESHOLD = 10000;
 
-    return [&t](auto begin, auto end) {
+    return [t](auto begin, auto end) {
         // Compute distance
         auto dist = std::ranges::distance(begin, end);
 
